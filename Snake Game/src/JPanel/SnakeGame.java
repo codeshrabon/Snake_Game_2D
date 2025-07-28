@@ -9,12 +9,18 @@ import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.font.TextLayout;
+import java.util.ArrayList;
+import java.util.List;
+
 
 public class SnakeGame extends JPanel implements ActionListener {
     private final int width;
     private final int height;
+    private final int cellSize;
     private static final int FRAME_RATE = 20;
     private boolean gameStart = false;
+    private final List<GamePoint> snake = new ArrayList<>();
+    private boolean gameOver = false;
 
 
     public SnakeGame( int width, final int height) {
@@ -25,6 +31,7 @@ public class SnakeGame extends JPanel implements ActionListener {
 
         this.width = width;
         this.height = height;
+        this.cellSize = width / (FRAME_RATE * 2);
 
         //setForeground(Color.GREEN);
         // without dimension, it will not show display
@@ -34,6 +41,8 @@ public class SnakeGame extends JPanel implements ActionListener {
         setBackground(Color.BLACK);
     }
     public void startGame(){
+
+        resetGameData();
         setFocusable(true);
         setFocusTraversalKeysEnabled(false);
         requestFocusInWindow();
@@ -49,13 +58,20 @@ public class SnakeGame extends JPanel implements ActionListener {
             }
         });
 
-        //adding timer
+        //adding timer event handler
+        //Timer will call actionPerformed method
         new Timer(1000 / FRAME_RATE, this).start();
 
         // repaint() moved to ActionListener method
         // access JPanel component graphic
         // will call java swing api
         //repaint();
+    }
+
+    private void resetGameData() {
+        snake.clear();
+        snake.add(new GamePoint(width / 2, height / 2));
+
     }
 
     // call paint component of jPanel
@@ -110,17 +126,55 @@ public class SnakeGame extends JPanel implements ActionListener {
 
             }
 
-
-
-
+        } else {
+            graphicKey.setColor(Color.BLUE);
+            for (final var point : snake){
+                graphicKey.fillRect(point.x,point.y,cellSize,cellSize);
+            }
         }
         /*System.out.println("Message shows");*/
     }
 
+    //Timer called this method
     @Override
     public void actionPerformed(final ActionEvent e) {
+        if (gameStart && !gameOver ){
+            move();
+        }
+
+
         //moved from startGame method
         repaint();
     }
+
+    private void move() {
+        //snake move from x to y co-ordinate
+        final GamePoint currentHead = snake.getFirst();
+        // with this length went forward
+        final GamePoint newHead = new GamePoint(currentHead.x + cellSize,currentHead.y);
+        snake.addFirst(newHead);
+
+        if (checkCollision()){
+            gameOver = true;
+            snake.removeFirst();
+        }else {
+            // remove the last one
+            snake.removeLast();
+        }
+
+
+    }
+
+    private boolean checkCollision() {
+        final GamePoint head = snake.getFirst();
+        final var invalidWidth = (head.x < 0) || (head.x >= width);
+        final var invalidHeight = (head.y < 0) || (head.y >= height);
+        return (invalidWidth || invalidHeight);
+    }
+
+    private record GamePoint(int x, int y){
+
+    }
+
 
 }
