@@ -10,6 +10,7 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.font.TextLayout;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
 
@@ -95,7 +96,7 @@ public class SnakeGame extends JPanel implements ActionListener {
                 }
             }
         }*/
-        if (!gameOver) {
+        else if (!gameOver) {
             switch (keyCode){
                 case KeyEvent.VK_UP:
                     if (direction != Direction.DOWN) newDirection = Direction.UP;
@@ -114,6 +115,12 @@ public class SnakeGame extends JPanel implements ActionListener {
                     System.out.println("Preseed Left");
                     break;
             }
+        } // while game is over starting new game by space
+        //but not killing the game
+        else if (keyCode == KeyEvent.VK_SPACE) {
+            gameStart = false;
+            gameOver = false;
+            resetGameData();
         }
     }
 
@@ -194,13 +201,29 @@ public class SnakeGame extends JPanel implements ActionListener {
             graphicKey.fillRect(food.x,food.y,cellSize,cellSize);
 
             //giving snake a color
-            graphicKey.setColor(Color.BLUE);
+            //graphicKey.setColor(Color.BLUE);
+            Color snakeColor = Color.GREEN;
             for (final var point : snake){
+                graphicKey.setColor(snakeColor);
                 graphicKey.fillRect(point.x,point.y,cellSize,cellSize);
+
+                final int newGreen = (int) Math.round(snakeColor.getGreen() * (0.95));
+                snakeColor = new Color(0, newGreen, 0);
+            }
+
+            // show score message
+            if (gameOver){
+
+                String scoreMessage = "Score: " + (snake.size() - 1) +
+                        "Press Space to Fresh Start";
+                printMessage(graphicKey, scoreMessage);
             }
         }
         /*System.out.println("Message shows");*/
     }
+
+    // printing the message
+
 
     //Timer called this method
     @Override
@@ -252,8 +275,33 @@ public class SnakeGame extends JPanel implements ActionListener {
         final GamePoint head = snake.getFirst();
         final var invalidWidth = (head.x < 0) || (head.x >= width);
         final var invalidHeight = (head.y < 0) || (head.y >= height);
-        return (invalidWidth || invalidHeight);
+
+        // endless game
+        //return (invalidWidth || invalidHeight);
+
+        // check if head touch body it ends
+        if (invalidWidth || invalidHeight){
+            return true;
+        }
+        return snake.size() != new HashSet<>(snake).size();
     }
+
+
+    // printing message
+    private void printMessage(Graphics g, String message) {
+        Graphics2D g2d = (Graphics2D) g;
+        g2d.setColor(Color.RED);
+        g2d.setFont(g2d.getFont().deriveFont(Font.BOLD, 24f));
+
+        var frc = g2d.getFontRenderContext();
+        var layout = new TextLayout(message, g2d.getFont(), frc);
+        var bounds = layout.getBounds();
+        float x = (float) (width - bounds.getWidth()) / 2;
+        float y = (float) (height - bounds.getHeight()) / 2;
+
+        layout.draw(g2d, x, y);
+    }
+
 
     private record GamePoint(int x, int y){
 
