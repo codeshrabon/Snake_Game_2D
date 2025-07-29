@@ -232,7 +232,11 @@ public class SnakeGame extends JPanel implements ActionListener {
         };
         snake.addFirst(newHead);
 
-        if (checkCollision()){
+        // check is food is equal to snake then again food will be generated
+        if (newHead.equals(food)){
+
+            generateFood();
+        }else if (checkCollision()){
             gameOver = true;
             snake.removeFirst();
         }else {
