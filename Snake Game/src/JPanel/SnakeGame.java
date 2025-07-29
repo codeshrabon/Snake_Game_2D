@@ -11,6 +11,7 @@ import java.awt.event.KeyEvent;
 import java.awt.font.TextLayout;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 
 public class SnakeGame extends JPanel implements ActionListener {
@@ -21,6 +22,10 @@ public class SnakeGame extends JPanel implements ActionListener {
     private boolean gameStart = false;
     private final List<GamePoint> snake = new ArrayList<>();
     private boolean gameOver = false;
+    private Direction direction = Direction.RIGHT;
+    private Direction newDirection = Direction.RIGHT;
+    private GamePoint food;
+    private final Random random = new Random();
 
 
     public SnakeGame( int width, final int height) {
@@ -49,18 +54,14 @@ public class SnakeGame extends JPanel implements ActionListener {
 
         addKeyListener(new KeyAdapter() {
             @Override
-            public void keyPressed(KeyEvent e) {
-                if (e.getKeyCode() == KeyEvent.VK_SPACE) {
-                    gameStart = true;
-                    System.out.println("Space was Pressed");
-                    //super.keyPressed(e);
-                }
+            public void keyPressed(final KeyEvent e) {
+                handleKeyEvent(e.getKeyCode());
             }
         });
 
         //adding timer event handler
         //Timer will call actionPerformed method
-        new Timer(1000 / FRAME_RATE, this).start();
+        new Timer(4000 / FRAME_RATE, this).start();
 
         // repaint() moved to ActionListener method
         // access JPanel component graphic
@@ -68,10 +69,71 @@ public class SnakeGame extends JPanel implements ActionListener {
         //repaint();
     }
 
+    private void handleKeyEvent(final int keyCode) {
+        if (!gameStart) {
+            if (keyCode == KeyEvent.VK_SPACE || keyCode == KeyEvent.VK_ENTER) {
+                gameStart = true;
+                System.out.println("Space was Pressed");
+                //super.keyPressed(e);
+            }
+        }
+        /*if (!gameOver) {
+
+                switch (keyCode){
+                    case KeyEvent.VK_UP:
+                        newDirection = Direction.UP;
+                        break;
+                    case KeyEvent.VK_DOWN:
+                        newDirection = Direction.DOWN;
+                        break;
+                    case KeyEvent.VK_RIGHT:
+                        newDirection = Direction.RIGHT;
+                        break;
+                    case KeyEvent.VK_LEFT:
+                        newDirection = Direction.LEFT;
+                        break;
+                }
+            }
+        }*/
+        if (!gameOver) {
+            switch (keyCode){
+                case KeyEvent.VK_UP:
+                    if (direction != Direction.DOWN) newDirection = Direction.UP;
+                    System.out.println("Preseed Up");
+                    break;
+                case KeyEvent.VK_DOWN:
+                    if (direction != Direction.UP) newDirection = Direction.DOWN;
+                    System.out.println("Preseed Down");
+                    break;
+                case KeyEvent.VK_RIGHT:
+                    if (direction != Direction.LEFT) newDirection = Direction.RIGHT;
+                    System.out.println("Preseed Right");
+                    break;
+                case KeyEvent.VK_LEFT:
+                    if (direction != Direction.RIGHT) newDirection = Direction.LEFT;
+                    System.out.println("Preseed Left");
+                    break;
+            }
+        }
+    }
+
     private void resetGameData() {
         snake.clear();
         snake.add(new GamePoint(width / 2, height / 2));
 
+        generateFood();
+    }
+
+    // generating food for snake
+    private void generateFood(){
+        // food is created, but it is not done
+        // food color food size is not determined yet
+        do {
+            food = new GamePoint(random.nextInt(width / cellSize) * cellSize,
+                    random.nextInt(height / cellSize) * cellSize);
+        }
+        // it just containing or iterating over the food
+        while (snake.contains(food));
     }
 
     // call paint component of jPanel
@@ -127,6 +189,11 @@ public class SnakeGame extends JPanel implements ActionListener {
             }
 
         } else {
+            // giving the food a color
+            graphicKey.setColor(Color.yellow);
+            graphicKey.fillRect(food.x,food.y,cellSize,cellSize);
+
+            //giving snake a color
             graphicKey.setColor(Color.BLUE);
             for (final var point : snake){
                 graphicKey.fillRect(point.x,point.y,cellSize,cellSize);
@@ -148,10 +215,21 @@ public class SnakeGame extends JPanel implements ActionListener {
     }
 
     private void move() {
+        //update new direction
+        direction = newDirection;
+
         //snake move from x to y co-ordinate
         final GamePoint currentHead = snake.getFirst();
         // with this length went forward
-        final GamePoint newHead = new GamePoint(currentHead.x + cellSize,currentHead.y);
+        //final GamePoint newHead = new GamePoint(currentHead.x + cellSize,currentHead.y);
+        // new indication of direction
+        final GamePoint newHead = switch (direction){
+            case UP -> new GamePoint(currentHead.x, currentHead.y - cellSize);
+            case DOWN -> new GamePoint(currentHead.x, currentHead.y + cellSize);
+            case LEFT -> new GamePoint(currentHead.x- cellSize, currentHead.y );
+            case RIGHT -> new GamePoint(currentHead.x  + cellSize, currentHead.y);
+
+        };
         snake.addFirst(newHead);
 
         if (checkCollision()){
@@ -161,6 +239,7 @@ public class SnakeGame extends JPanel implements ActionListener {
             // remove the last one
             snake.removeLast();
         }
+
 
 
     }
@@ -174,6 +253,10 @@ public class SnakeGame extends JPanel implements ActionListener {
 
     private record GamePoint(int x, int y){
 
+    }
+
+    private enum Direction{
+        UP, DOWN, RIGHT, LEFT
     }
 
 
